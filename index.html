@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Recall Lab: AI help and memory study</title>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:wght@400;600&family=Instrument+Sans:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f2;--sf:#fff;--ink:#17212b;--mu:#5b6772;--ln:#d6dbd6;--ac:#0e6b62;--aci:#fff;--fr:#fbf0de;--frl:#a65a0b;--ai:#e7edf6;--me:#e3efe9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14191e;--sf:#1c232a;--ink:#e8ecef;--mu:#9aa6b0;--ln:#34404a;--ac:#47b5a8;--aci:#08201d;--fr:#2e2415;--frl:#e0a050;--ai:#222d3b;--me:#1f3430}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14191e;--sf:#1c232a;--ink:#e8ecef;--mu:#9aa6b0;--ln:#34404a;--ac:#47b5a8;--aci:#08201d;--fr:#2e2415;--frl:#e0a050;--ai:#222d3b;--me:#1f3430}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 "Instrument Sans",system-ui,sans-serif}
+main{max-width:900px;margin:0 auto;padding:24px 18px 60px}
+h1,h2,h3{font-family:Newsreader,Georgia,serif;font-weight:600;line-height:1.2;margin:0 0 .5em}
+h1{font-size:2.3rem}h2{font-size:1.5rem}h3{font-size:1.1rem}
+p{margin:0 0 .9em;max-width:68ch}
+.lead{font-size:1.1rem;color:var(--mu)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.panel{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:20px}
+input,textarea{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--ln);border-radius:6px;padding:10px}
+textarea{min-height:200px;resize:vertical;font-family:Newsreader,Georgia,serif;font-size:1.05rem}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+button{font:inherit;cursor:pointer;border-radius:6px;border:1px solid var(--ac);background:transparent;color:var(--ac);padding:8px 16px}
+button.pr{background:var(--ac);color:var(--aci);font-weight:600}
+button.ln{border:0;padding:4px 0;text-decoration:underline;color:var(--mu)}
+.bar{display:flex;gap:6px;margin-bottom:22px}.bar i{flex:1;height:6px;border-radius:3px;background:var(--ln)}.bar i.on{background:var(--ac)}
+.brief{background:var(--sf);border-left:4px solid var(--ac);padding:14px 18px;margin-bottom:18px;border-radius:0 8px 8px 0}
+.brief q{display:block;font-family:Newsreader,Georgia,serif;font-style:normal;margin-top:8px;color:var(--mu)}
+.work{display:grid;grid-template-columns:1.3fr 1fr;gap:16px;margin-bottom:16px}.work.solo{grid-template-columns:1fr}
+.chat{border-radius:10px;padding:14px;display:flex;flex-direction:column;background:var(--ai)}
+.chat.meta{background:var(--fr);border:1px dashed var(--frl)}
+#log{flex:1;min-height:200px;max-height:340px;overflow:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.m{padding:8px 11px;border-radius:8px;background:var(--sf);white-space:pre-wrap;font-size:.95rem}.m.me{background:var(--me);align-self:flex-end}
+.send{display:flex;gap:6px}
+.lk{display:grid;grid-template-columns:1fr auto;gap:8px 16px;align-items:center;padding:12px 0;border-bottom:1px solid var(--ln)}
+.lk div{display:flex;gap:4px;align-items:center}.lk small{color:var(--mu)}
+.lk label{display:flex;flex-direction:column;align-items:center;font-size:.8rem;padding:2px 6px}
+.err{color:#b3261e;min-height:1.4em}
+table{border-collapse:collapse;font-size:.85rem}th,td{border:1px solid var(--ln);padding:4px 8px;text-align:left}
+.sc{overflow-x:auto;margin-bottom:14px}
+@media(max-width:700px){.grid2,.work{grid-template-columns:1fr}.lk{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script>
+const T=[
+{id:"email",name:"Email",html:"<b>Write an email</b> to your course instructor, Dr. Rahman. Ask for a 3-day extension on Assignment 2 (due Friday). Explain that your lab exam on Thursday clashes with it, and offer to send a draft by Wednesday.",
+ai:["Subject: Request for a short extension on Assignment 2\n\nDear Dr. Rahman,\n\nI am writing to ask for a three-day extension on Assignment 2, moving the deadline from Friday to the following Monday. My lab exam falls on Thursday, which leaves too little time to finish to the standard I want. To show good faith, I can send you a draft by Wednesday.\n\nThank you for considering this.\n\nBest regards,\n[Your name]","Dear Dr. Rahman, could I please have a three-day extension on Assignment 2, to the following Monday? My lab exam on Thursday clashes with the deadline, and I can send a draft by Wednesday. Thank you, [Your name]"],
+q:["Who is Dr. Rahman, and what is the one thing you need him to say yes to?","Which details would let him answer without writing back to you?","How will you open, and how formal should the tone be?"]},
+{id:"summary",name:"Summary",html:"<b>Summarise this passage in two sentences.</b><q>Cities are often several degrees warmer than the countryside around them, a pattern known as the urban heat island effect. Dark roads and roofs absorb sunlight and release it slowly at night, while concrete and asphalt replace the plants that would otherwise cool the air by releasing water. Tall buildings also block wind and trap heat between them. Planners respond with reflective roofing, street trees, and parks. Studies suggest that raising tree cover by even a modest amount can lower summer street temperatures noticeably, and that the benefit reaches the poorest districts, which have the least shade, the most.</q>",
+ai:["Cities run warmer than nearby countryside because dark surfaces hold heat, paved areas lack cooling plants, and tall buildings block wind. Reflective roofs, street trees and parks help, especially in the poorest, least shaded districts.","Cities trap heat through dark surfaces, missing plants and blocked wind; trees and reflective roofs cool them, most of all in poorer areas."],
+q:["Without looking back, what is this passage mainly about, in your own words?","Which causes and which responses does the author name? Which matter most?","What can you cut to fit two sentences?"]},
+{id:"logic",name:"Logic puzzle",html:"<b>Solve the puzzle and explain your reasoning in 2 to 3 sentences.</b><q>Ayesha, Bilal and Chand each own one pet: a cat, a dog, or a parrot. Clue 1: Bilal is allergic to fur. Clue 2: Chand’s pet is not the dog. Who owns which pet?</q>",
+ai:["Bilal owns the parrot, Chand owns the cat, and Ayesha owns the dog. Bilal’s fur allergy rules out the cat and the dog, so he has the parrot. Chand does not have the dog, so he has the cat, which leaves the dog for Ayesha.","Parrot: Bilal (allergy). Cat: Chand (not the dog). Dog: Ayesha (what remains)."],
+q:["Which clue gives you the most certainty, and why?","If Bilal can’t have the cat or the dog, what is left for him? What follows for the others?","How would you explain each step to a classmate?"]}];
+const REF="Reread your draft. Which part are you least sure of, and what would you change?";
+const C={alone:["On your own","You will work without any assistant."],std:["With an AI assistant","You can chat with an AI assistant that can write and rewrite text for you."],meta:["With a reflective AI coach","You can chat with a coach that asks planning and reflection questions. It will not write the text for you."]};
+const ORD=[["alone","std","meta"],["std","meta","alone"],["meta","alone","std"]];
+const LK=[["load","How mentally demanding was this task?","Not at all","Extremely"],["eff","I could do a similar task again without any help.","Disagree","Agree"],["own","The final answer feels like my own work.","Disagree","Agree"]];
+const app=document.getElementById("app"),mem={};let D=null;
+const E=h=>{app.innerHTML=h;window.scrollTo(0,0)};
+const $=s=>document.querySelector(s);
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){mem[k]=v}};
+const ld=k=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):(mem[k]||null)}catch(e){return mem[k]||null}};
+const save=()=>{sv("rl:"+D.pid,D);const ids=ld("rl:ids")||[];if(!ids.includes(D.pid)){ids.push(D.pid);sv("rl:ids",ids)}};
+const bar=n=>`<div class="bar" aria-label="Block ${n+1} of 3">${[0,1,2].map(i=>`<i class="${i<=n?"on":""}"></i>`).join("")}</div>`;
+const W=s=>[...new Set((s.toLowerCase().match(/[a-z]{4,}/g)||[]))];
+const score=(a,b)=>{const x=W(a),y=new Set(W(b));return x.length?+(x.filter(w=>y.has(w)).length/x.length).toFixed(2):0};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function home(){E(`<h1>Recall Lab</h1><p class="lead">A study prototype: does working with an AI change what you remember about your own work, and does a coach that asks questions change it back?</p>
+<div class="grid2"><div class="panel"><h2>Session 1</h2><p>Three short tasks, about 25 minutes. Your answers stay in this browser and are not uploaded.</p><label for="pid">Participant ID</label><input id="pid" placeholder="For example P01" autocomplete="off"><p class="err" id="err"></p><button class="pr" id="go">Start session 1</button></div>
+<div class="panel"><h2>Day-7 follow-up</h2><p>One week later: recall what you wrote in each task, from memory.</p><label for="pid2">Participant ID</label><input id="pid2" placeholder="Same ID as session 1" autocomplete="off"><p class="err" id="err2"></p><button class="pr" id="fu">Start follow-up</button></div></div>
+<p style="margin-top:20px"><button class="ln" id="rs">Researcher view</button></p>`);
+$("#go").onclick=()=>{const p=$("#pid").value.trim();if(!p)return $("#err").textContent="Enter a participant ID, for example P01.";
+const n=parseInt(p.replace(/\D/g,""))||[...p].reduce((a,c)=>a+c.charCodeAt(0),0),o=((n-1)%3+3)%3;
+D={pid:p,group:o,blocks:ORD[o].map((c,i)=>({task:T[i].id,cond:c,edits:0,pastes:0,prompts:0,inserts:0,msgs:[]}))};save();brief(0)};
+$("#fu").onclick=()=>{const p=$("#pid2").value.trim(),d=ld("rl:"+p);if(!d)return $("#err2").textContent="No session 1 data found for this ID in this browser.";D=d;follow()};
+$("#rs").onclick=research}
+
+function brief(i){const b=D.blocks[i],t=T[i];E(`${bar(i)}<h2>Task ${i+1} of 3: ${t.name}</h2><div class="panel"><h3>${C[b.cond][0]}</h3><p>${C[b.cond][1]}</p></div><div class="brief" style="margin-top:16px">${t.html}</div><button class="pr" id="b">Begin task</button>`);$("#b").onclick=()=>task(i)}
+
+function task(i){const b=D.blocks[i],t=T[i],qs=t.q.concat(REF);b.start=Date.now();b.qi=0;
+E(`${bar(i)}<div class="brief">${t.html}</div><div class="work ${b.cond=="alone"?"solo":""}"><div><label for="ed">Your answer</label><textarea id="ed"></textarea><small id="wc">0 words</small></div>${b.cond=="alone"?"":`<aside class="chat ${b.cond}" aria-label="Assistant"><h3>${b.cond=="std"?"AI assistant":"Reflective coach"}</h3><div id="log" aria-live="polite"></div><div class="send"><input id="msg" placeholder="Type a message" aria-label="Message"><button id="snd">Send</button></div></aside>`}</div><button class="pr" id="sub">Submit answer</button><p class="err" id="e2"></p>`);
+const ed=$("#ed"),wc=()=>$("#wc").textContent=(ed.value.trim().split(/\s+/).filter(Boolean).length)+" words";
+ed.oninput=()=>{b.edits++;wc()};ed.onpaste=()=>{b.pastes++};
+const lg=(r,x)=>b.msgs.push({r,x,ms:Date.now()-b.start});
+const say=(r,x,ins)=>{const m=document.createElement("div");m.className="m "+(r=="me"?"me":"");$("#log").appendChild(m);
+if(r=="me"){m.textContent=x;return}
+const fin=()=>{if(ins){const k=document.createElement("button");k.textContent="Insert into my answer";k.style.cssText="display:block;margin-top:8px";k.onclick=()=>{b.inserts++;lg("insert",x);ed.value=x;wc()};m.appendChild(k)}$("#log").scrollTop=1e5};
+if(b.cond=="std"){const w=x.split(" ");let n=0;m.textContent="";const id=setInterval(()=>{m.firstChild?m.firstChild.nodeValue+=" "+w[n++]:m.append(w[n++]);if(n>=w.length){clearInterval(id);fin()}},22)}else{m.textContent=x;fin()}};
+if(b.cond=="meta"){const q="I won’t write your answer, but I’ll ask questions to help you plan and check it. "+qs[0];b.qi=1;lg("ai",q);say("ai",q)}
+if(b.cond!="alone"){const send=()=>{const m=$("#msg"),v=m.value.trim();if(!v)return;m.value="";b.prompts++;lg("user",v);say("me",v);
+let r;if(b.cond=="std")r=b.prompts==1?t.ai[0]:"Sure, here’s a shorter version:\n"+t.ai[1];
+else r=(/\b(write|draft|give me|answer|solve|summari[sz]e|just tell|do it)\b/i.test(v)?"I won’t write it for you, but I can help you think it through. ":"Good thinking. ")+(b.qi<qs.length?qs[b.qi++]:"Is there anything else you want to think through before you submit?");
+lg("ai",r);setTimeout(()=>say("ai",r,b.cond=="std"),400)};$("#snd").onclick=send;$("#msg").onkeydown=e=>{if(e.key=="Enter")send()}}
+$("#sub").onclick=()=>{if(ed.value.trim().split(/\s+/).length<8)return $("#e2").textContent="Write at least a short answer (8 words) before submitting.";
+b.end=Date.now();b.secs=Math.round((b.end-b.start)/1000);b.text=ed.value;b.words=ed.value.trim().split(/\s+/).length;save();survey(i)}}
+
+function survey(i){const b=D.blocks[i];E(`${bar(i)}<h2>Quick questions</h2><p>Rate each from 1 to 7.</p>${LK.map(([k,q,lo,hi])=>`<div class="lk"><div><b>${q}</b></div><div><small>${lo}</small>${[1,2,3,4,5,6,7].map(n=>`<label><input type="radio" name="${k}" value="${n}" style="width:auto">${n}</label>`).join("")}<small>${hi}</small></div></div>`).join("")}<p class="err" id="e3"></p><button class="pr" id="n">Continue</button>`);
+$("#n").onclick=()=>{const s={};for(const [k] of LK){const r=document.querySelector(`input[name=${k}]:checked`);if(!r)return $("#e3").textContent="Please answer all three questions.";s[k]=+r.value}b.survey=s;save();recall(i)}}
+
+function recall(i){const b=D.blocks[i];E(`${bar(i)}<h2>From memory</h2><p>Without looking anywhere, write down what you submitted for the <b>${T[i].name.toLowerCase()}</b> task, as exactly as you can.</p><textarea id="r"></textarea><p class="err" id="e4"></p><button class="pr" id="n">${i<2?"Next task":"Finish"}</button>`);
+$("#n").onclick=()=>{const v=$("#r").value.trim();if(!v)return $("#e4").textContent="Write what you remember, even if it is only a little.";b.recall=v;b.rs=score(b.text,v);save();i<2?brief(i+1):done()}}
+
+function done(){E(`<h2>Session 1 complete</h2><p>Thank you. Your ID is <b>${esc(D.pid)}</b>. In 7 days, return to this page and choose “Day-7 follow-up” with the same ID.</p><button class="pr" id="h">Back to start</button>`);$("#h").onclick=home}
+
+function follow(){E(`<h2>Day-7 follow-up</h2><p>For each task, write what you remember of your own answer. Do not look anything up.</p>${D.blocks.map((b,i)=>`<label for="d${i}"><b>${T[i].name}</b></label><textarea id="d${i}" style="min-height:110px;margin-bottom:12px"></textarea>`).join("")}<button class="pr" id="n">Submit</button>`);
+$("#n").onclick=()=>{D.blocks.forEach((b,i)=>{b.drec=$("#d"+i).value;b.drs=score(b.text||"",b.drec)});save();E(`<h2>All done</h2><p>Thank you for taking part.</p><button class="pr" id="h">Back to start</button>`);$("#h").onclick=home}}
+
+function research(){const ids=ld("rl:ids")||[],H=["pid","group","task","condition","secs","words","edits","pastes","prompts","inserts","load","efficacy","ownership","recall_imm","recall_day7"],R=[];
+ids.forEach(p=>{const d=ld("rl:"+p);d&&d.blocks.forEach(b=>R.push([d.pid,d.group,b.task,b.cond,b.secs,b.words,b.edits,b.pastes,b.prompts,b.inserts,...(b.survey?[b.survey.load,b.survey.eff,b.survey.own]:["","",""]),b.rs??"",b.drs??""]))});
+const csv=[H,...R].map(r=>r.join(",")).join("\n");
+E(`<h2>Researcher view</h2><p>${ids.length} participant(s) stored in this browser. Recall scores are the share of content words from the original answer that reappear in the recalled text, a rough proxy to check against manual idea-unit coding.</p><div class="sc"><table><tr>${H.map(h=>`<th>${h}</th>`).join("")}</tr>${R.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("")}</table></div><label for="csv">CSV (select all and copy into Excel or SPSS)</label><textarea id="csv" readonly style="min-height:120px;font-family:monospace;font-size:.8rem">${esc(csv)}</textarea><p style="margin-top:12px"><button id="cp">Copy CSV</button> <button class="ln" id="h">Back</button></p>`);
+$("#h").onclick=home;$("#cp").onclick=()=>{try{navigator.clipboard.writeText(csv)}catch(e){$("#csv").select()}}}
+home();
+</script>
+</body>
+</html>
